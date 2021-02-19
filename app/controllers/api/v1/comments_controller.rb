@@ -3,6 +3,7 @@ module Api
     class CommentsController < ApplicationController
       before_action :authorize_access_request!, except: [:show, :index]
       before_action :set_comment, only: [:show, :update, :destroy]
+      before_action :find_commentable, only: :create
 
       # GET /comments
       def index
@@ -18,7 +19,7 @@ module Api
 
       # POST /comments
       def create
-        @comment = Comment.new(comment_params)
+        @comment = @commentable.comments.new(comment_params)
 
         if @comment.save
           render json: @comment, status: :created, location: @comment
@@ -50,6 +51,14 @@ module Api
       # Only allow a list of trusted parameters through.
       def comment_params
         params.require(:comment).permit(:content, :user_id, :commentable_id, :commentable_type)
+      end
+
+      def find_commentable
+        if params[:comment_id]
+          @commentable = Comment.find_by_id(params[:comment_id])
+        elsif params[:question_id]
+          @commentable = Question.find_by_id(params[:question_id])
+        end
       end
     end
   end
